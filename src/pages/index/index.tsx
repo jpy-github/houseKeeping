@@ -76,13 +76,48 @@ import Special from './components/Special/index';
 import More from './components/More/index';
 import Loading from '../../components/Loading/index';
 // import GlobalFooter from '../../components/GlobalFooter/index';
-// import { getRequest } from '../../utils/api';
+import { getRequest } from '../../utils/api';
 import home from './mock/home';
 import './index.less';
 
-const getRequest=(path)=>{
-  if(path==='/home')
-  return home
+// const getRequest=(path)=>{
+//   if(path==='/home')
+//   return home
+// }
+
+const userInit = ()=>{
+  Taro.login({
+    success: function (loginRes) {
+      if (loginRes.code) {
+        Taro.getUserInfo({
+          success:user=>{
+            Taro.request({
+              url: 'http://localhost:3000/login',
+              method:'POST',
+              data: {
+                code: loginRes.code,
+                encryptedData:user.encryptedData,
+                iv:user.iv
+              },
+              success:res=>{
+                console.log('res',res)
+                Taro.setStorage({
+                  key:'user',
+                  data:{
+                    ...res.data.user,
+                    id:res.data.data.openId
+                  }
+                })
+              }
+            })
+          }
+        })
+
+      } else {
+        console.log('登录失败！' + loginRes.errMsg)
+      }
+    }
+  })
 }
 
 class Index extends Component {
@@ -101,7 +136,8 @@ class Index extends Component {
 
   componentDidMount = async () => {
     // this.setState({ isLoading: true });
-    const data = await getRequest('/home');
+    userInit()
+    const data = await getRequest('/goods');
 
     if (data.status === 200) {
       this.setState({ fetchData: data.data });
@@ -162,7 +198,7 @@ class Index extends Component {
           <Image className='logoImg' src={logoImgUrl} />
         </View>
 
-        <View className='titleDom'>精选单品1111</View>
+        <View className='titleDom'>精选单品2</View>
         <Single singleList={singleList} />
 
         <Special moreList={moreList} />

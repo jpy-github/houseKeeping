@@ -30,8 +30,8 @@ class Single extends Component {
             return (
               <View
                 className="singleItemWrap"
-                key={single.id}
-                onClick={this.goGoodInfo.bind(this, single.id, single.name, single.price)}
+                key={single._id}
+                onClick={this.goGoodInfo.bind(this, single._id, single.name, single.price)}
               >
                 <View className="singleTitle">{single.name}</View>
                 <View className="singleCon">{single.desc}</View>

@@ -1,13 +1,15 @@
+// 商品详情
 import Taro, { getCurrentInstance } from '@tarojs/taro';
-import React, { Component } from 'react';
-import { View, Text, Image, Swiper, SwiperItem, ScrollView } from '@tarojs/components';
-import { AtIcon } from 'taro-ui';
+import { Component } from 'react';
+import { View, Text, Image, Swiper, SwiperItem, ScrollView, Button } from '@tarojs/components';
+// import { AtIcon } from 'taro-ui';
 // import { connect } from 'react-redux';
 // import { addToCart } from '../../store/actions/cartActions';
 // import CartGoodList from '../../components/CartGoodList/index';
 import Loading from '../../components/Loading/index';
 import { getRequest } from '../../utils/api';
 import './index.less';
+// import data from './mock';
 
 // @connect(({ cartReducer }) => ({
 //   cartReducer,
@@ -17,7 +19,7 @@ class GoodInfo extends Component {
     super(...arguments);
     this.state = {
       isOpen: false,
-      badgeNum: 0,
+      // badgeNum: 0,
       fetchData: {
         swiper: [],
       },
@@ -30,7 +32,7 @@ class GoodInfo extends Component {
       router: { params = {} },
     } = getCurrentInstance() && getCurrentInstance();
 
-    const res = await getRequest('/goodInfo', { id: params.id });
+    const res = await getRequest(`/goods/${params.id}`);
     if (res && res.status === 200) {
       this.setState({
         fetchData: res.data,
@@ -39,19 +41,19 @@ class GoodInfo extends Component {
 
     this.setState({
       isLoading: false,
-      id: params.id,
-      name: params.name,
-      price: params.price,
+      // id: params.id,
+      // name: params.name,
+      // price: params.price,
     });
   };
 
-  componentDidShow = () => {
-    const { cartReducer = {} } = this.props;
+  // componentDidShow = () => {
+  //   const { cartReducer = {} } = this.props;
 
-    this.setState({
-      badgeNum: cartReducer.badgeNum,
-    });
-  };
+  //   this.setState({
+  //     badgeNum: cartReducer.badgeNum,
+  //   });
+  // };
 
   /**
    * @desc 添加商品
@@ -59,12 +61,12 @@ class GoodInfo extends Component {
    * @param { string } name
    * @param { number } price
    */
-  addGood = (id, name, price) => {
-    const { badgeNum = 0 } = this.state;
-    this.setState({ badgeNum: badgeNum + 1 });
+  // addGood = (id, name, price) => {
+  //   const { badgeNum = 0 } = this.state;
+  //   this.setState({ badgeNum: badgeNum + 1 });
 
-    // this.props.dispatch(addToCart(id, name, price));
-  };
+  //   // this.props.dispatch(addToCart(id, name, price));
+  // };
 
   /**
    * @desc 打开关闭购物车详情
@@ -80,8 +82,11 @@ class GoodInfo extends Component {
    * @param { string } page
    */
   handleLinkTo = (page) => {
+    const {
+      router: { params = {} },
+    } = getCurrentInstance() && getCurrentInstance();
     Taro.redirectTo({
-      url: `/pages/${page}/index`,
+      url: `/pages/${page}/index?id=${params.id}`,
     });
   };
 
@@ -89,28 +94,67 @@ class GoodInfo extends Component {
    * @desc CartGoodList 子组件回调
    * @param { string } type
    */
-  callback = (type) => {
-    if (type === '1') {
-      this.setState({ isOpen: false });
-    } else if (type === '2') {
-      const { badgeNum = 0 } = this.state;
+  // callback = (type) => {
+  //   if (type === '1') {
+  //     this.setState({ isOpen: false });
+  //   } else if (type === '2') {
+  //     const { badgeNum = 0 } = this.state;
 
-      this.setState({ badgeNum: badgeNum + 1 });
-    } else if (type === '3') {
-      const { badgeNum = 0 } = this.state;
+  //     this.setState({ badgeNum: badgeNum + 1 });
+  //   } else if (type === '3') {
+  //     const { badgeNum = 0 } = this.state;
 
-      this.setState({ badgeNum: badgeNum - 1 });
-    }
-  };
+  //     this.setState({ badgeNum: badgeNum - 1 });
+  //   }
+  // };
+
+  test = ()=>{
+    Taro.login({
+      success: function (loginRes) {
+        console.log(loginRes)
+        if (loginRes.code) {
+          Taro.getUserInfo({
+            success:user=>{
+              Taro.request({
+                url: 'http://localhost:3000/login',
+                method:'post',
+                data: {
+                  code: loginRes.code,
+                  encryptedData:user.encryptedData,
+                  iv:user.iv
+                },
+                success:res=>{
+                  console.log({
+                    ...res.data.user,
+                    id:res.data.data.openId
+                  })
+                  Taro.setStorage({
+                    key:'user',
+                    data:{
+                      ...res.data.user,
+                      id:res.data.data.openId
+                    }
+                  })
+                }
+              })
+            }
+          })
+
+        } else {
+          console.log('登录失败！' + loginRes.errMsg)
+        }
+      }
+    })
+  }
 
   render() {
     const {
       fetchData = {},
-      id = 0,
-      name = '',
-      price = '',
-      isOpen = false,
-      badgeNum = '',
+      // id = 0,
+      // name = '',
+      // price = '',
+      // isOpen = false,
+      // badgeNum = '',
     } = this.state;
     const { swiper } = fetchData;
 
@@ -149,6 +193,9 @@ class GoodInfo extends Component {
                 </View>
               );
             })}
+                    <View className="index">
+      <Button onClick={this.test} >授权</Button>
+    </View>
         </ScrollView>
         <View className='goodInfoBottom' style={{justifyContent:'flex-end'}}>
           {/* <View className='bottomIconWrap'>
@@ -177,7 +224,7 @@ class GoodInfo extends Component {
             加入购物车
           </View> */}
           <View className='goPay' onClick={this.handleLinkTo.bind(this, 'cart')} >
-            去结算
+            去结算12
           </View>
         </View>
 
