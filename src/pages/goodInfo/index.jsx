@@ -108,45 +108,6 @@ class GoodInfo extends Component {
   //   }
   // };
 
-  test = ()=>{
-    Taro.login({
-      success: function (loginRes) {
-        console.log(loginRes)
-        if (loginRes.code) {
-          Taro.getUserInfo({
-            success:user=>{
-              Taro.request({
-                url: 'http://localhost:3000/login',
-                method:'post',
-                data: {
-                  code: loginRes.code,
-                  encryptedData:user.encryptedData,
-                  iv:user.iv
-                },
-                success:res=>{
-                  console.log({
-                    ...res.data.user,
-                    id:res.data.data.openId
-                  })
-                  Taro.setStorage({
-                    key:'user',
-                    data:{
-                      ...res.data.user,
-                      id:res.data.data.openId
-                    }
-                  })
-                }
-              })
-            }
-          })
-
-        } else {
-          console.log('登录失败！' + loginRes.errMsg)
-        }
-      }
-    })
-  }
-
   render() {
     const {
       fetchData = {},
@@ -194,7 +155,6 @@ class GoodInfo extends Component {
               );
             })}
                     <View className="index">
-      <Button onClick={this.test} >授权</Button>
     </View>
         </ScrollView>
         <View className='goodInfoBottom' style={{justifyContent:'flex-end'}}>

@@ -5,28 +5,35 @@ import Taro from '@tarojs/taro';
 import React, { Component, useState, useEffect } from 'react';
 import { View, Input } from '@tarojs/components';
 import { AtToast } from 'taro-ui';
+// import { customRequest } from 'src/utils/api';
 // import { connect } from 'react-redux';
 // import { editUserInfo } from '../../store/actions/userActions';
 import './index.less';
+import userInit from './userinit';
 
-// @connect(({ userReducer }) => ({
-//   userReducer,
-// }))
-// class UserEdit extends Component {
-//   constructor() {
-//     console.log('useredit1')
-//     super(...arguments);
-//     this.state = {
-//       consignee: '',
-//       address: '',
-//       phone: '',
-//       isOpen: false,
-//     };
-//   }
+const apiUrl = "http://localhost:3000";
+function customRequest(url, data, method = 'GET') {
+  return new Promise((resolve, reject) => {
+    Taro.request({
+      url: apiUrl + url,
+      data: data,
+      method: method,
+    })
+      .then((res) => {
+        resolve(res.data);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
+
 const UserEdit = ()=>{
-  const [consignee, setConsignee] = useState('')
-  const [address, setAddress] = useState('')
-  const [phone, setPhone] = useState('')
+  const currentUser = Taro.getStorageSync('user')
+  const { name:initConsignee='', address:initAddress='', phone:initPhone=''} = currentUser;
+  const [consignee, setConsignee] = useState(initConsignee)
+  const [address, setAddress] = useState(initAddress)
+  const [phone, setPhone] = useState(initPhone)
   const [isOpen, setIsOpen] = useState(false)
   
 
@@ -46,6 +53,7 @@ const UserEdit = ()=>{
    * @param { object } e
    */
   const onConsigneeChange = async (e) => {
+    console.log(e.detail.value)
     setConsignee(e.detail.value)
   };
 
@@ -70,14 +78,15 @@ const UserEdit = ()=>{
    */
    const submitEdit = async () => {
      setIsOpen(true)
+     await customRequest(`/employer`, {id:currentUser._id,name:consignee, address, phone}, 'PUT');
+     await userInit()
     // this.props.dispatch(editUserInfo(this.state.consignee, this.state.address, this.state.phone));
 
     setTimeout(() => {
-      // this.setState({ isOpen: false });
+      setIsOpen(false)
       Taro.navigateBack();
     }, 2000);
   };
-    // const { consignee='', address='', phone='', isOpen='' } = {};
 // return 12131234
     return (
       <View className='userEditWrap'>
@@ -87,7 +96,8 @@ const UserEdit = ()=>{
             <Input
               type='text'
               value={consignee}
-              onChange={onConsigneeChange.bind(this)}
+              // onChange={onConsigneeChange}
+              onBlur={onConsigneeChange}
               className='inputNode'
             />
           </View>
@@ -99,7 +109,7 @@ const UserEdit = ()=>{
             <Input
               type='text'
               value={address}
-              onChange={onAddressChange.bind(this)}
+              onBlur={onAddressChange}
               className='inputNode'
             />
           </View>
@@ -111,7 +121,7 @@ const UserEdit = ()=>{
             <Input
               type='text'
               value={phone}
-              onChange={onPhoneChange.bind(this)}
+              onBlur={onPhoneChange}
               className='inputNode'
             />
           </View>

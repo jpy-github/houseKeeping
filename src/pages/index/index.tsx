@@ -1,72 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { View, Text, Button, Image } from "@tarojs/components";
-// import Taro from "@tarojs/taro";
-// import MySwiper from "../../components/MySwiper";
-// import GoodsList from '../../components/GoodsList';
-// import "./index.less";
-
-// const Index = () => {
-//   const [userName, setUserName] = useState("ZS");
-//   const [brands, setBrands] = useState([]);
-//   const [productList, setProductList] = useState([]);
-
-
-//   useEffect(() => {
-//     console.log(Taro.getUserInfo({}));
-//     Taro.getSetting({}).then((res) => {
-//       console.log(res.authSetting["scope.userInfo"]);
-//       if (res.authSetting["scope.userInfo"] === false) {
-//         Taro.getUserInfo();
-//       }
-//     });
-
-//     setBrands([
-//       {image_src:'https://img.staticdj.com/0d02e62e143767be187d23db01925aa8.jpg'},
-//       {image_src:'https://cdn.shopify.com/s/files/1/0264/5121/4410/products/Hypoallergenic-Earring-Lifts_01_a097a402-3952-4978-8c71-1563ea34397e.jpg?v=1607592825'}
-//     ])
-//     setProductList([
-//       {
-//         id:1
-//       },
-//       {
-//         id:2
-//       },
-//       {
-//         id:3
-//       }
-//     ])
-//   }, []);
-
-//   const handleGetUserInfo = (res) => {
-//     console.log(res);
-//   };
-
-//   return (
-//     <View className="index">
-//       <MySwiper
-//         // banner={banner}
-//         home
-//       />
-//       {brands.map((item, index) => (
-//         <View className="nav-item" key={index}>
-//           <Image mode="widthFix" src={item.image_src} />
-//         </View>
-//       ))}
-//       <GoodsList list={productList} 
-//       // loading={effects['home/product']} 
-//       />
-//       <Button open-type="getPhoneNumber" onGetPhoneNumber={handleGetUserInfo}>
-//         授权
-//       </Button>
-//       <Text>Hello {userName}!</Text>
-//       111111111111111111111111111
-//     </View>
-//   );
-// };
-
-// export default Index;
-
-
 import Taro from '@tarojs/taro';
 import React, { Component } from 'react';
 import { View, Image, Swiper, SwiperItem } from '@tarojs/components';
@@ -77,6 +8,8 @@ import More from './components/More/index';
 import Loading from '../../components/Loading/index';
 // import GlobalFooter from '../../components/GlobalFooter/index';
 import { getRequest } from '../../utils/api';
+// import indeximg from '../../images/';
+import indeximg from '../../images/custom/indeximg1.jpg';
 import home from './mock/home';
 import './index.less';
 
@@ -158,9 +91,27 @@ class Index extends Component {
 
   render() {
     const {
-      fetchData: { imgList, iconList, singleList, moreList, logoImgUrl },
+      fetchData: { imgList1, iconList, singleList, moreList },
     } = this.state;
-
+    const logoImgUrl = indeximg
+const imgList = [
+  {
+    "id": 4,
+    "iconType": "",
+    "title": "",
+    "imgUrl": "http://localhost:3000/images/5e6604a3133956.60922417.jpg",
+    "logoImgUrl": "",
+    "type": 2
+  },
+  {
+    "id": 5,
+    "iconType": "",
+    "title": "",
+    "imgUrl": "http://localhost:3000/images/5e6604a3133956.60922417.jpg",
+    "logoImgUrl": "",
+    "type": 3
+  },
+]
     return (
       <View className='homeWrap'>
         <Swiper indicatorColor='#999' indicatorActiveColor='#fff' circular indicatorDots autoplay>
@@ -198,7 +149,7 @@ class Index extends Component {
           <Image className='logoImg' src={logoImgUrl} />
         </View>
 
-        <View className='titleDom'>精选单品2</View>
+        <View className='titleDom'>精选单品12</View>
         <Single singleList={singleList} />
 
         <Special moreList={moreList} />

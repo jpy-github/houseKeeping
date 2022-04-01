@@ -38,3 +38,19 @@ export function postRequest(url, data) {
       });
   });
 }
+
+export function customRequest(url, data, method='GET') {
+  return new Promise((resolve, reject) => {
+    Taro.request({
+      url: apiUrl + url,
+      data: data,
+      method: method,
+    })
+      .then((res) => {
+        resolve(res.data);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}

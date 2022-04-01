@@ -1,118 +1,113 @@
 // 似乎是订单详情
 
-// import { useState, useEffect } from "react";
-// import { View, Text, Button } from "@tarojs/components";
-// import "./index.less";
-// import Taro from "@tarojs/taro";
-
-// const Index = () => {
-//   const [userName, setUserName] = useState("ZS");
-//   useEffect(()=>{
-//     console.log(Taro.getUserInfo({}))
-//     Taro.getSetting({}).then(res=>{
-//       console.log(res.authSetting['scope.userInfo'])
-//       if(res.authSetting['scope.userInfo']===false){
-//         Taro.getUserInfo()
-//       }
-//     })
-//   }, [])
-
-//   useEffect(() => {
-//   console.log('123')
-//   }, []);
-
-//   const handleGetUserInfo=res=>{
-//     console.log(res)
-//   }
-
-//   return (
-//     <View className="index">
-//       <Button open-type="getPhoneNumber" onGetPhoneNumber={handleGetUserInfo} >授权</Button>
-//       <Text>Hello {userName}!</Text>
-//     </View>
-//   );
-// };
-
-// export default Index;
-
 import Taro, { getCurrentInstance } from '@tarojs/taro';
 import React, { Component } from 'react';
 import { View, Input, ScrollView, Image } from '@tarojs/components';
 import { AtIcon } from 'taro-ui';
 import Loading from '../../components/Loading/index';
 // import { getRequest } from '../../utils/api';
+// import { customRequest } from 'src/utils/api';
+import mock from './mock';
 import './index.less';
+
+const apiUrl = "http://localhost:3000";
+function customRequest(url, data, method = 'GET') {
+  return new Promise((resolve, reject) => {
+    Taro.request({
+      url: apiUrl + url,
+      data: data,
+      method: method,
+    })
+      .then((res) => {
+        resolve(res.data);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+}
 
 class Order extends Component {
   constructor() {
     super(...arguments);
     this.state = {
-      orderType: 0,
+      orderType: '全部订单',
       searchVal: '',
       orderList: [],
+      initOrderList: []
     };
   }
 
-  // componentDidMount = () => {
-  //   const {
-  //     router: { params = {} },
-  //   } = getCurrentInstance() && getCurrentInstance();
-  //   const { orderType = 0 } = params;
+  componentDidMount = () => {
+    // const {
+    //   router: { params = {} },
+    // } = getCurrentInstance() && getCurrentInstance();
+    const orderType = Taro.getStorageSync('orderType')??'全部订单';
 
-  //   this.fetchApi(orderType);
-  //   this.setState({ orderType });
-  // };
+    this.fetchApi();
+    this.setState({ orderType });
+  };
+
+  componentWillUnmount = () => {
+    Taro.setStorage({
+      key:'orderType',
+      data:'全部订单'
+    })
+  }
+
+  componentDidShow() {
+    this.fetchApi()
+  }
 
   /**
    * @desc 搜索事件
    * @param { object }  e
    */
-  // handleSearch = (e) => {
-  //   this.setState({ isLoading: true });
+  handleSearch = (e) => {
+    this.setState({ isLoading: true });
 
-  //   const { value } = e && e.detail && e.detail;
+    const { value } = e && e.detail && e.detail;
 
-  //   if (value) {
-  //     let { orderList = [] } = this.state;
-  //     orderList = orderList.filter((item) => value === item.goodName);
-  //     this.setState({ orderList });
-  //   } else {
-  //     const { orderType = 0 } = this.state;
-  //     this.fetchApi(orderType);
-  //   }
+    if (value) {
+      let { initOrderList = [] } = this.state;
+      let orderList = initOrderList.filter((order) => value === order.goodsId.name);
+      this.setState({ orderList });
+    } else{
+      this.setState(preState=>({ orderList:preState.initOrderList}));
+    }
 
-  //   this.setState({
-  //     searchVal: value,
-  //     isLoading: false,
-  //   });
-  // };
+    this.setState({
+      searchVal: value,
+      isLoading: false,
+    });
+  };
 
   /**
    * @desc 清空搜索框内容
    */
-  // handleClearSearchVal = () => {
-  //   this.setState({ searchVal: '' });
+  handleClearSearchVal = () => {
+    this.setState(preState=>({ searchVal: '', orderList:preState.initOrderList}));
 
-  //   const { orderType = 0 } = this.state;
-  //   this.fetchApi(orderType);
-  // };
+    // const { orderType = 0 } = this.state;
+  };
 
   /**
    * @desc 获取数据
    * @param { number } orderType
    */
-  // fetchApi = async (orderType) => {
-  //   this.setState({ isLoading: true });
+  fetchApi = async () => {
+    const orderType = Taro.getStorageSync('orderType')??'全部订单';
+    this.setState({ isLoading: true });
+    const {searchVal} = this.state
+    const res = await customRequest('/order', { orderType, searchVal });
+    if (res && res.status === 200) {
+      const { data = [] } = res;
 
-  //   const res = await getRequest('/order', { orderType });
-  //   if (res && res.status === 200) {
-  //     const { data = [] } = res;
+      this.setState({ orderList: data, initOrderList: data });
+    }
 
-  //     this.setState({ orderList: data });
-  //   }
-
-  //   this.setState({ isLoading: false });
-  // };
+    this.setState({ isLoading: false });
+  };
 
   render() {
     const { orderList = [], searchVal = '', isLoading = false } = this.state;
@@ -125,10 +120,10 @@ class Order extends Component {
             type='text'
             placeholder='请输入商品名称'
             value={searchVal}
-            // onInput={this.handleSearch.bind(this)}
+            onInput={this.handleSearch.bind(this)}
           />
-          <View className='removeIcon' 
-          // onClick={this.handleClearSearchVal}
+          <View className='removeIcon'
+          onClick={this.handleClearSearchVal}
           >
             <AtIcon value='close-circle' size='20' color='#ccc' />
           </View>
@@ -139,18 +134,23 @@ class Order extends Component {
             orderList.length > 0 &&
             orderList.map((order) => {
               return (
-                <View className='cardWrap' key={order.id}>
+                <View className='cardWrap' key={order._id}>
                   <View className='cardDom'>
                     <View className='cardImgWrap'>
-                      <Image className='cardImg' src={order.imgUrl} />
+                      <Image className='cardImg' src={order.goodsId?.imgUrl} />
                     </View>
                     <View className='cardCon'>
-                      <View className='cardTitle'>{order.goodName}</View>
+                      <View className='cardTitle'>{order.goodsId?.name}</View>
                       <View className='cardType'>
-                        {order.orderType === 1 ? '待收货' : '已收货'}
+                        {/* {order.orderType === 1 ? '待收货' : '已收货'} */}
+                        {order.status}
                       </View>
-                      <View className='cardTxt'>{order.goodDesc}</View>
+                      <View className='cardTxt'>{order.goodsId?.desc}</View>
                     </View>
+                    {['已接单', '已完成'].includes(order.status) && <View className='cardCon'>
+                      <View className='cardTxt'>人员:{order.employeeId?.name}</View>
+                      <View className='cardTxt'>联系方式:{order.employeeId?.phone}</View>
+                    </View>}
                   </View>
                 </View>
               );

@@ -1,10 +1,10 @@
-import Taro, {getCurrentInstance} from '@tarojs/taro';
+import Taro, { getCurrentInstance } from '@tarojs/taro';
 import React, { Component, useState, useEffect } from 'react';
 import { View, Picker, Text } from '@tarojs/components';
 import { AtInput, AtIcon, AtToast } from 'taro-ui';
 // import { connect } from 'react-redux';
 // import { addToCart, deleteFromCart } from '../../store/actions/cartActions';
-import { postRequest, getRequest } from '../../utils/api';
+import { postRequest, getRequest, customRequest } from '../../utils/api';
 import './index.less';
 
 // @connect(({ cartReducer, userReducer }) => ({
@@ -20,37 +20,40 @@ import './index.less';
 //       });
 //     }
 
-const Cart =()=> {
+const Cart = props => {
 
-      const selector = [
-        { id: 1, value: 5, name: '5元' },
-        { id: 2, value: 10, name: '10元' },
-        { id: 3, value: 15, name: '15元' },
-        { id: 4, value: 20, name: '20元' },
-      ]
-      const [selectorChecked, setSelectorChecked] = useState('请选择优惠券')
-      const [discountMoney, setDiscountMoney] = useState(0)
-      const [actualMoney, setActualMoney] = useState(10)
-      const [goods, setGoods] = useState({})
-      const [inputVal, setInputVal] = useState('')
-      const [isOpen, setIsOpen] = useState(false)
-      const [isSubmit, setIsSubmit] = useState(false)
-      const currentUser = Taro.getStorageSync('user')
-  
+  const selector = [
+    { id: 1, value: 5, name: '5元' },
+    { id: 2, value: 10, name: '10元' },
+    { id: 3, value: 15, name: '15元' },
+    { id: 4, value: 20, name: '20元' },
+  ]
+  const [selectorChecked, setSelectorChecked] = useState('请选择优惠券')
+  const [discountMoney, setDiscountMoney] = useState(0)
+  const [actualMoney, setActualMoney] = useState()
+  const [goods, setGoods] = useState({})
+  const [inputVal, setInputVal] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [isSubmit, setIsSubmit] = useState(false)
+  const [dateSelectorChecked, setDateSelectorChecked] = useState('请选择上门时间')
 
-      useEffect(() => {
-        const {
-          router: { params = {} },
-        } = getCurrentInstance() && getCurrentInstance();
-        const fetchData = async()=>{
-          const res = await getRequest(`/goods/${params.id}`);
-          if (res && res.status === 200) {
-            setGoods(res.data)
-          }
-        }
-        fetchData()
-        }, []);
-      
+  const currentUser = Taro.getStorageSync('user')
+
+
+  useEffect(() => {
+    const {
+      router: { params = {} },
+    } = getCurrentInstance() && getCurrentInstance();
+    const fetchData = async () => {
+      const res = await getRequest(`/goods/${params.id}`);
+      if (res && res.status === 200) {
+        setGoods(res.data)
+        setActualMoney(res.data.price)
+      }
+    }
+    fetchData()
+  }, []);
+
   /**
    * @desc 添加商品
    * @param id
@@ -84,7 +87,6 @@ const Cart =()=> {
    * @param e
    */
   const onSelectChange = (e) => {
-    console.log(e)
     const originPrice = goods.price;
     const selected = selector[e.detail.value];
     let discountMoneyTemp = selected.value;
@@ -123,51 +125,68 @@ const Cart =()=> {
    */
   const confirmPay = async () => {
     const data = {
-      employer_id:currentUser._id,
-      goods_id:goods._id,
+      employerId: currentUser._id,
+      address:currentUser.address,
+      name:currentUser.name,
+      userPhone:currentUser.phone,
+      goodsId: goods._id, 
+      price:actualMoney,
+      scheduleDate:dateSelectorChecked
     }
-    await postRequest('/orderCreate', data);
+    const res = await postRequest('/orderCreate', data);
+    const {orderId} = res
     setIsSubmit(true)
     setTimeout(() => {
       setIsSubmit(false)
-      Taro.switchTab({
-        url: `/pages/order/index`,
-      });
+      Taro.showModal({
+        title: '支付',
+        content: '这是一个模态弹窗',
+        confirmText: '支付完成',
+        cancelText: '稍后再说',
+        success: async res => {
+          if (res.confirm) {
+            await customRequest(`/order`, {orderId, status:"已付款"}, 'PUT');
+          }
+          Taro.switchTab({
+            url: `/pages/order/index`,
+          });
+        }
+      })
     }, 2000);
 
     // const data = await getRequest('/mock/payApi');
     // if (data.code === 0) {
-      // Taro.requestPayment({
-      //   timeStamp: '',
-      //   nonceStr: '',
-      //   package: '',
-      //   signType: 'MD5',
-      //   paySign: '',
-      //   success: function (res) { console.log(res)},
-      //   fail: function (res) {console.log(res) }
-      // })
+    // Taro.requestPayment({
+    //   timeStamp: '',
+    //   nonceStr: '',
+    //   package: '',
+    //   signType: 'MD5',
+    //   paySign: '',
+    //   success: function (res) { console.log(res)},
+    //   fail: function (res) {console.log(res) }
+    // })
     // }
-    
+
   };
 
-    // const { selector, discountMoney, actualMoney, isOpen } = this.state;
-    
-    const { name, address, phone } = currentUser;
-    console.log(goods)
-    return (
-      <View className='orderWrap'>
-        <View className='userInfo'>
-          <Text className='userInfoTxt'>收货人：{name}</Text>
-          <Text className='userInfoTxt'>联系方式：{phone}</Text>
-          <View className='userInfoAddr'>收货地址：{address}</View>
-        </View>
+  // const { selector, discountMoney, actualMoney, isOpen } = this.state;
 
-        <View className='goodsWrap'>
-          <View className='goodsTitle'>所选商品</View>
+  const { name, address, phone } = currentUser;
+  console.log(goods)
+  return (
+    <View className='orderWrap'>
+      <View className='userInfo'>
+        <Text className='userInfoTxt'>收货人：{name}</Text>
+        <Text className='userInfoTxt'>联系方式：{phone}</Text>
+        <View className='userInfoAddr'>收货地址：{address}</View>
+      </View>
 
-              <View className='goodsList' key={goods.id}>
-                <Text className='goodName'>{goods.name}</Text>
-                {/* <View className='goodOperate'>
+      <View className='goodsWrap'>
+        <View className='goodsTitle'>所选商品</View>
+
+        <View className='goodsList' key={goods.id}>
+          <Text className='goodName'>{goods.name}</Text>
+          {/* <View className='goodOperate'>
                   <View className='goodIcon' onClick={this.subtractNum.bind(this, item.id)}>
                     <AtIcon value='subtract-circle' size='18' color='#2083e4' />
                   </View>
@@ -176,45 +195,50 @@ const Cart =()=> {
                     <AtIcon value='add-circle' size='18' color='#2083e4' />
                   </View>
                 </View> */}
-                <Text className='goodPrice'>￥{goods.price}</Text>
-              </View>
-
-          <Picker mode='selector' range={selector} rangeKey='name' 
+          <Text className='goodPrice'>￥{goods.price}</Text>
+        </View>
+        <Picker mode='date' rangeKey='date_at'
+          onChange={e => setDateSelectorChecked(e.detail.value)}
+        >
+          <View className='couponPicker'>
+            上门时间<Text className='couponTxt'>{dateSelectorChecked}</Text>
+          </View>
+        </Picker>
+        <Picker mode='selector' range={selector} rangeKey='name'
           onChange={onSelectChange}
-          >
-            <View className='couponPicker'>
-              红包<Text className='couponTxt'>{selectorChecked}</Text>
-            </View>
-          </Picker>
-          <View className='totalMoney'>
-            合计：
-            <Text className='totalMoneyNum'>￥{actualMoney}</Text>
+        >
+          <View className='couponPicker'>
+            红包<Text className='couponTxt'>{selectorChecked}</Text>
           </View>
-          <View>
-            <AtInput
-              name='value'
-              title='备注：'
-              type='text'
-              placeholder='请输入备注'
-              value={inputVal}
-              onChange={inputValChange}
-            />
-          </View>
+        </Picker>
+        <View className='totalMoney'>
+          合计：
+          <Text className='totalMoneyNum'>￥{actualMoney}</Text>
         </View>
-
-        <View className='orderBottom'>
-          <View className='bottomTotal'>待支付：￥{actualMoney}</View>
-          <View className='bottomCoupon'>已优惠：￥{discountMoney}</View>
-          <View className='confirmPay' onClick={confirmPay}>
-            确认支付1
-          </View>
+        <View>
+          <AtInput
+            name='value'
+            title='备注：'
+            type='text'
+            placeholder='请输入备注'
+            value={inputVal}
+            onChange={inputValChange}
+          />
         </View>
-
-        <AtToast isOpened={isOpen} text='优惠券金额不可以大于总金额' icon='sketch' />
-        <AtToast isOpened={isSubmit} text='下单成功' icon='text-strikethrough' />
       </View>
-    );
-  
+
+      <View className='orderBottom'>
+        <View className='bottomTotal'>待支付：￥{actualMoney}</View>
+        <View className='bottomCoupon'>已优惠：￥{discountMoney}</View>
+        <View className='confirmPay' onClick={confirmPay}>
+          确认支付1
+        </View>
+      </View>
+      <AtToast isOpened={isOpen} text='优惠券金额不可以大于总金额' icon='sketch' />
+      <AtToast isOpened={isSubmit} text='下单成功' icon='text-strikethrough' />
+    </View>
+  );
+
 }
 
 export default Cart;

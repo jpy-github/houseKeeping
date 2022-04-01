@@ -11,38 +11,42 @@ import './index.less';
 // @connect(({ userReducer }) => ({
 //   userReducer,
 // }))
+
 class User extends Component {
   constructor() {
     super(...arguments);
     this.state = {
-      avatar: '',
-      nickName: '',
-      consignee: '',
+      headPortrait: '',
+      name: '',
+      name: '',
       address: '',
       phone: '',
+      currentUser: {}
     };
   }
 
   componentDidMount = () => {
-    let userInfo = {};
-    if (Taro.getStorageSync('userInfo')) {
-      userInfo = Taro.getStorageSync('userInfo');
-    }
-
-    this.setState({
-      avatar: userInfo.avatarUrl,
-      nickName: userInfo.nickName,
-    });
+    let currentUser = Taro.getStorageSync('user')
+    this.setState({ currentUser })
   };
+
+  componentDidShow() {
+    let currentUser = Taro.getStorageSync('user')
+    this.setState({ currentUser })
+  }
 
   /**
    * @desc 跳转订单列表
    * @param { number } type
    */
-  handleGoOrder = (type) => {
-    Taro.navigateTo({
-      url: `/pages/order/index?orderType=${type}`,
+  handleGoOrder = (orderType) => {
+    Taro.switchTab({
+      url: `/pages/order/index`,
     });
+    Taro.setStorage({
+      key: 'orderType',
+      data: orderType
+    })
   };
 
   /**
@@ -55,34 +59,33 @@ class User extends Component {
   };
 
   render() {
-    const { avatar = '', nickName = '', consignee = '', address = '', phone = '' } = this.state;
-
+    const { headPortrait = '', nickName = '', name = '', address = '', phone = '' } = this.state.currentUser;
     return (
       <View className='homeWrap'>
         <ScrollView scroll-y='true' scrollWithAnimation className='scrollDom'>
           <View className='headWrap'>
             <View className='userInfoWrap'>
               <View className='avatarWrap'>
-                <Image className='avatarImg' src={avatar} />
+                <Image className='avatarImg' src={headPortrait} />
               </View>
               <View className='nickName'>{nickName}</View>
             </View>
-            <Image className='backImg' src={avatar} />
+            <Image className='backImg' src={headPortrait} />
           </View>
 
           <View className='iconListWrap'>
             <View className='iconList'>
-              <View className='iconItem' onClick={this.handleGoOrder.bind(this, 0)}>
+              <View className='iconItem' onClick={this.handleGoOrder.bind(this, '全部订单')}>
                 <AtIcon value='lightning-bolt' size='30' color='#999' />
                 <View className='iconItemTxt'>全部订单</View>
               </View>
-              <View className='iconItem' onClick={this.handleGoOrder.bind(this, 1)}>
+              <View className='iconItem' onClick={this.handleGoOrder.bind(this, '未完成')}>
                 <AtIcon value='heart' size='30' color='#999' />
-                <View className='iconItemTxt'>待收货</View>
+                <View className='iconItemTxt'>未完成</View>
               </View>
-              <View className='iconItem' onClick={this.handleGoOrder.bind(this, 2)}>
+              <View className='iconItem' onClick={this.handleGoOrder.bind(this, '已完成')}>
                 <AtIcon value='heart-2' size='30' color='#999' />
-                <View className='iconItemTxt'>已收货</View>
+                <View className='iconItemTxt'>已完成</View>
               </View>
             </View>
           </View>
@@ -95,7 +98,7 @@ class User extends Component {
                 </View>
                 <View className='gridItemTxt'>
                   <View className='gridItemTitle'>收货人</View>
-                  <View className='gridItemCon'>{consignee}</View>
+                  <View className='gridItemCon'>{name}</View>
                 </View>
               </View>
               <View className='gridItem' onClick={this.handleGoUserEdit.bind(this)}>
@@ -120,13 +123,13 @@ class User extends Component {
                 </View>
               </View>
               <View className='gridItem'>
-                <View className='gridItemIcon'>
+                {/* <View className='gridItemIcon'>
                   <AtIcon value='lightning-bolt' size='30' color='#999' />
                 </View>
                 <View className='gridItemTxt'>
                   <View className='gridItemTitle'>我的收藏</View>
                   <View className='gridItemCon'>...</View>
-                </View>
+                </View> */}
               </View>
             </View>
           </View>
